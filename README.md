@@ -39,9 +39,11 @@ A command line interphase is provided through `run_ptmsea.R`. This requires the 
 
             -h, --help
                     Show this help message and exit
-                    
-            --pavito=LOGICAL
-                    TRUE or FALSE indicating whether dea results are a pavito output
+
+Example:
+
+    Rscript run_ptmsea.R -d ./sample_data/dea_PXD030674.csv -o test --gene_set ./sample_data/ptm.sig.db.all.flanking.mouse.v1.9.0.gmt --fasta ./sample_data/mouse.UP000000589_10090_with_isoforms.fasta --out_dir ./output --ssgsea_dir ./src/ssGSEA2.0/
+
 
 ## Requirements of *dea* Input File
 The input file should be a CSV table with the following columns:
