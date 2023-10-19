@@ -28,100 +28,49 @@ library(pacman)
 #' @export
 #'
 #' @examples
-#' run_ptmsea(input_dea = "./data/VAV1_Phos_PythonSummary_043021.xlsx",
-#'  fasta_input <- "./data/Homo sapiens (SwissProt TaxID=9606_and_subtaxonomies) (1).fasta"
-#'  out_path <- "./output/VAV1_gsea/"
-#'  output_prefix <- "VAV1"
-#'  ssgsea2_dir <- "./src/ssGSEA2.0/"
-#'  gene_set_database <- "./data/ptm.sig.db.all.flanking.human.v1.9.0.gmt"
-#'  )
+# run_ptmsea(input_dea = "./sample_data/dea_PXD030674.csv",
+#  fasta_input = "./sample_data/mouse.UP000000589_10090_with_isoforms.fasta",
+#  out_path = "./output",
+#  output_prefix = "PXD030674",
+#  ssgsea2_dir = "./src/ssGSEA2.0/",
+#  gene_set_database = "./sample_data/ptm.sig.db.all.flanking.mouse.v1.9.0.gmt"
+#  )
 run_ptmsea <- function(
     input_dea, 
     fasta_input, 
     out_path, 
     output_prefix, 
     ssgsea2_dir, 
-    gene_set_database,
-    pavito){
+    gene_set_database){
   
   #1. Extract p-val, logfc, and signed logpvals ---------------------------------
-  if(!pavito){
-    cat("Reading input excel file...\n")
-    dea <- 
-      read_xlsx(input_dea) %>%
-      
-      #Rename columns for convenience
-      mutate(pep_id = `...1`,
-             prot_id = FullAccession,
-             seq_start = `Positions in Master Proteins`) %>%
-      
-      #Extract phosphorylation position
-      mutate(ptm_site = Modifications) %>%
-      separate_rows(ptm_site,sep = "; \\d") %>%
-      filter(str_detect(ptm_site,"Phospho")) %>%
-      mutate(ptm_site = str_match(ptm_site, "\\[(.+)\\]")[,2]) %>%
-      separate_rows(ptm_site,sep = "; ") %>%
-      mutate(ptm_site = str_remove(ptm_site,"\\(.+\\)")) %>%
-      
-      #Remove non-localized phosphosites
-      filter(str_detect(ptm_site,"\\d")) %>%
-      
-      #Extract sequence start site
-      mutate(seq_start = str_split_fixed(seq_start,";",2)[,1]) %>%
-      mutate(seq_start = as.numeric(str_match(seq_start,"\\[(\\d+)-")[,2])) %>%
-      
-      #Offset phosphorylation position
-      mutate(ptm_site = as.numeric(str_extract(ptm_site,"\\d+")) + seq_start - 1) %>% 
-      
-      #Select columns of interest
-      select(prot_id,ptm_site,pep_id,starts_with("Ttest"),contains("/")) %>%
-      select(-starts_with("Phos")) %>%
-      select(-contains("_Phos")) %>%
-      
-      #Make into longer format for easy manipulation
-      rename_with(function(x){
-        grps <- str_match(x,".+(Grp\\d+).+(Grp\\d+)")
-        str_c("fc;",grps[,2],"_v_",grps[,3])
-      },starts_with("NormPhos")) %>%
-      rename_with(function(x){
-        grps <- str_match(x,".+(Grp\\d+).+(Grp\\d+)")
-        str_c("pval;",grps[,3],"_v_",grps[,2])
-      },starts_with("Ttest")) %>%
-      pivot_longer(c(-prot_id,-ptm_site,-pep_id),
-                   names_to = c(".value","contrast"),
-                   names_sep = ";") %>%
-      
-      #Calculate signed log p-value 
-      mutate(sign_logp = sign(log(fc))*-log10(pval))
+  
+  cat("Reading input csv file...\n")
+  dea <- 
+    read_csv(input_dea) %>%
     
-    cat("Excel file parsing complete!\n")
-  } else {
-    cat("Reading input csv file...\n")
-    dea <- 
-      read_csv(input_dea) %>%
-      
-      mutate(
-        prot_id = str_extract(feature_label, "^[[:alnum:]]+"),
-        seq_start = str_match(feature_label,"^[[:alnum:]]+ \\[(\\d+)")[,2],
-        phosphosites = str_extract(feature_label, "\\dxPhospho([ |;][\\[| ][Y|T|S]\\d*)+")
-      ) %>%
-      mutate(phosphosites = str_extract_all(phosphosites,"[S|T|Y]\\d*")) %>%
-      unnest(phosphosites) %>%
-      filter(str_detect(phosphosites,"\\d")) %>%
-      drop_na(logfc) %>%
-      mutate(phosphosites = as.numeric(str_extract(phosphosites,"\\d+"))+ as.numeric(seq_start) - 1) %>%
-      transmute(
-        prot_id = toupper(prot_id),
-        ptm_site = phosphosites,
-        pep_id = feature_name,
-        contrast = contrast,
-        pval,fc = 2^logfc,
-        sign_logp = -log10(pval)*sign(logfc)
-      )
-      
-    
-    cat("CSV file parsing complete!\n")
-  }
+    mutate(
+      prot_id = str_extract(feature_label, "^[[:alnum:]]+"),
+      seq_start = str_match(feature_label,"^[[:alnum:]]+ \\[(\\d+)")[,2],
+      phosphosites = str_extract(feature_label, "\\dxPhospho([ |;][\\[| ][Y|T|S]\\d*)+") 
+    ) %>%
+    mutate(phosphosites = str_extract_all(phosphosites,"[S|T|Y]\\d*")) %>%
+    unnest(phosphosites) %>%
+    filter(str_detect(phosphosites,"\\d")) %>%
+    drop_na(logfc) %>%
+    mutate(phosphosites = as.numeric(str_extract(phosphosites,"\\d+"))) %>%
+    transmute(
+      prot_id = toupper(prot_id),
+      ptm_site = phosphosites,
+      pep_id = feature_label,
+      contrast = contrast,
+      pval,fc = 2^logfc,
+      sign_logp = -log10(pval)*sign(logfc)
+    )
+  
+  
+  cat("CSV file parsing complete!\n")
+  
   
   # 2. Add motif sequence ----------------------------------------------------
   
@@ -232,7 +181,7 @@ run_ptmsea <- function(
   
   # 4. Run PTM-SEA ------------------------------------------------------------
   cat("Starting PTM-SEA algorithm...\n")
-  script.dir <- path.expand("./src/ssGSEA2.0/")
+  script.dir <- path.expand("./src/ssGSEA2.0/") 
   source(file.path(ssgsea2_dir,"src/ssGSEA2.0.R"))
   current_wd <- getwd() 
   
