@@ -101,11 +101,11 @@ run_ptmsea <- function(
       read_csv(input_dea) %>%
       
       mutate(
-        prot_id = str_extract(feature_name, "^[[:alnum:]]+"),
-        seq_start = str_match(feature_name,"^[[:alnum:]]+__(\\d+)")[,2],
-        phosphosites = str_extract(feature_name, "\\dxphospho(__[y|t|s]\\d*)+")
+        prot_id = str_extract(feature_label, "^[[:alnum:]]+"),
+        seq_start = str_match(feature_label,"^[[:alnum:]]+ \\[(\\d+)")[,2],
+        phosphosites = str_extract(feature_label, "\\dxPhospho([ |;][\\[| ][Y|T|S]\\d*)+")
       ) %>%
-      mutate(phosphosites = str_extract_all(phosphosites,"_[s|t|y]\\d*")) %>%
+      mutate(phosphosites = str_extract_all(phosphosites,"[S|T|Y]\\d*")) %>%
       unnest(phosphosites) %>%
       filter(str_detect(phosphosites,"\\d")) %>%
       drop_na(logfc) %>%
