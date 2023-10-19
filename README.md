@@ -26,10 +26,10 @@ A command line interphase is provided through `run_ptmsea.R`. This requires the 
                     Prefix to be added to output folder and files
 
             --gene_set=CHARACTER
-                    PTM-SigDB gene set database [default= ./data/ptm.sig.db.all.flanking.human.v1.9.0.gmt]
+                    PTM-SigDB gene set database 
 
             --fasta=CHARACTER
-                    FASTA file used in proteome search [default= ./data/Homo sapiens (SwissProt TaxID=9606_and_subtaxonomies) (1).fasta]
+                    FASTA file used in proteome search 
 
             --out_dir=CHARACTER
                     Output directory[default= ./output]
@@ -43,11 +43,6 @@ A command line interphase is provided through `run_ptmsea.R`. This requires the 
             --pavito=LOGICAL
                     TRUE or FALSE indicating whether dea results are a pavito output
 
-### Example usage
-
-Using the default parameters, which assumes that default FASTA and GMT files are located in the right directories with the correct names.
-
-`Rscript run_ptmsea.R -d ./data/VAV1_Phos_PythonSummary_043021.xlsx -o VAV1`
 
 ## Output
 
