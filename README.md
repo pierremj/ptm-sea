@@ -6,7 +6,7 @@ A wrapper for running PTM-SEA from a phosphoproteomics differential abundance an
 
 The `ptmsea.R` script performs the following computations:
 
-1.  Parse excel file with differential abundance analysis (DA) results
+1.  Parse differential abundance analysis (DA) results from a CSV file
 
 2.  Calculate signed logp values from fold-changes and t-test p-values
 
@@ -20,7 +20,7 @@ A command line interphase is provided through `run_ptmsea.R`. This requires the 
 
     Options:
             -d CHARACTER, --dea=CHARACTER
-                    Excel file with differential abundance results
+                    CSV file with differential abundance results
 
             -o CHARACTER, --out=CHARACTER
                     Prefix to be added to output folder and files
@@ -39,9 +39,18 @@ A command line interphase is provided through `run_ptmsea.R`. This requires the 
 
             -h, --help
                     Show this help message and exit
-                    
-            --pavito=LOGICAL
-                    TRUE or FALSE indicating whether dea results are a pavito output
+
+Example:
+
+    Rscript run_ptmsea.R -d ./sample_data/dea_PXD030674.csv -o test --gene_set ./sample_data/ptm.sig.db.all.flanking.mouse.v1.9.0.gmt --fasta ./sample_data/mouse.UP000000589_10090_with_isoforms.fasta --out_dir ./output --ssgsea_dir ./src/ssGSEA2.0/
+
+
+## Requirements of *dea* Input File
+The input file should be a CSV table with the following columns:
+* `feature_label` The Uniprot Accession ID and the modified site in Proteome Discoverer format (PD column Modifications in Master Proteins). For example `Q80UK8 1xPhospho [S970]` for singly modified and `Q8VDM4 2xPhospho [S789; S802]` for double modified
+* `contrast` Name of the comparison performed during differential analysis
+* `logfc` The fold-change in log scale
+* `pval` The nominal p-value of the t-test 
 
 
 ## Output
